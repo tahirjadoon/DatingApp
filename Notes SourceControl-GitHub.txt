@@ -26,7 +26,7 @@ Important, we are putting the apps inside a single repository.
 	We will be placing both the projects in one repo so that the notes can go in as well. Go to te parent folder in terminal or command prompt and type
 	>git init 
 
-	you might need to close and re-open vs code. Setup repo on github and pick its path 
+	you might need to close and re-open vs code. 
 	
 3. Go to Source Control, on the Changes line, click + and then click tick mark on source control line to commit. 
 
