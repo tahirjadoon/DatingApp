@@ -1,0 +1,65 @@
+CTRL+K U Ctrl+K W => close all window
+CTRL+K S to save all
+CTRL+/ to comment the line
+Shift+Alt A to comment a block
+CTRL+SHIFT P show all commands
+F5 Debug
+CTRL+F5 start without debugging
+CTRL+` to toggle the terminal
+CTRL+. to bring up the context menu on squigly lines 
+
+Terminal>dotnet run will run the project
+Terminal>dotnet watch run will re-run after save 
+CTRL+C to shutdown
+
+>cls => to clear the screen
+
+>dotnet --version
+>node --version
+>npm --version
+
+>dotnet -h   => see the commands
+>dotnet new -h  => contextual help
+>dotnet new webapi -h  => contextual help
+
+1.
+Creating the WEB-API Project
+>dotnet new webapi -o DatingApp.API -n DatingApp.API
+
+	Adding c# related extensions
+	1. C# for Visual Studio Code (powered by OmniSharp)
+	2. C# Extensions
+	
+	adding nuget
+	1. vscode-nuget-package-manager
+	
+	After the reload you'll be shown some file missing popup - click yes. It will create .vscode folder. 
+	
+	
+	
+Initially disabled https in Startup.cs file => Configure method by commenting two lines
+
+Then go to Properties/LaunchSettings.json
+	Under DatingApp.API make 
+		launchBroser: false
+	and since we are not running in HTTPS 
+		applicationUrl: remove https "https://localhost:5001;http://localhost:5000"
+	
+2.
+++++++++++++++++++++++++++++++++++	
+FOLLOW Notes SQL Lite Setup.txt
+++++++++++++++++++++++++++++++++++
+
+3. CORS
+	statrtup.cs	
+		ConfigureServices
+			services.AddCors();
+		Configure
+			app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());  [Allowing every thing]
+
+
+
+
+
+
+

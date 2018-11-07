@@ -1,0 +1,62 @@
+http://sqlitebrowser.org/ download and install
+
+1.
+Create a new folder Data
+
+Add DataContext and DBSet
+
+    public class DataContext : DbContext
+    {
+        public DataContext(DbContextOptions<DataContext>  options) : base (options) {}
+
+        public DbSet<Value> Values { get; set; }
+    }
+
+2. 
+Go to startup.cs and add a service for AddDbContext. We are using Sqlite so add the nuget package
+	1. CTRL+SHIFT P > to show all commands
+	2. Nuget Package Manager: Add Package hit enter
+	3. Then type Microsoft.EntityFrameworkCore.Sqlite hit enter 
+	4. Then select Microsoft.EntityFrameworkCore.Sqlite hit enter
+	5. Then add version 2.10 (select latest) and hit enter
+	6. If it asks you to restore unresolved dependencies, click restore button
+	7. If you look at the DatingApp.API.csproj file you'll see the package reference to Microsoft.EntityFrameworkCore.Sqlite
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.1.4"/>
+	8. add service as services.AddDbContext<DataContext>(x => x.UseSqlite("ConnectionString"));
+		do CTRL+. on Sqlite to reference the assembly
+	9. add Microsoft.EntityFrameworkCore.Tools
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.1.4"/>
+		
+3. 
+Creating the database using Entity Framework migrations
+	Go to appsettings.json (note that even though we are in development mode specifying a connection string here will work for both appsettings.json and appsettings.Development.json
+	
+	{
+	  "ConnectionStrings": {
+		"DefaultConnection": "Data Source=DatingApp.db"
+	  },
+	  "Logging": {
+		"LogLevel": {
+		  "Default": "Warning"
+		}
+	  },
+	  "AllowedHosts": "*"
+	}
+
+	
+4. Go back to Startup.cs and change the addDbContext to 
+	services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection"))); 
+	
+5. Open terminal CTRL+` and create the initial database . It will create the migrations folder
+	dotnet ef migrations add InitialCreate
+	To undo this action, use 'ef migrations remove'
+	
+6. Apply migration and create Db
+	> dotnet ef database update
+	It will create a DatingApp.db
+	Using SQL Lite DB browser you can look at the data
+	
+	
+	
+
+	

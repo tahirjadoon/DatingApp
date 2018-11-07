@@ -1,0 +1,38 @@
+Create Component 
+>ng g c value --spec false 
+>ng generate component value --spec false 
+
+to move between the component and html use shotcut key since we have the extension 
+	html=alt+o component=alt+u	
+	in html mode type a- it will give the snippet to pick 
+	
+Some helpful extensions for Angular
+
+1.
+Some other helpful extensions
+	1. Angular and then select Angular v7 Snippets by john papa 
+	2. Angular Files 1.6.2 Alexander Ivanichev
+	4. Angular Language Service 0.1.10 by Angular
+	5. Angular2-switcher by infinity1207
+	6. Auto Rename Tag 0.0.15 Jun Han
+	7. Bracket Pair Colorizer CoenraadS
+	8. Debugger for Chrome Microsoft 4.11.0
+	9. Material Icon Theme Philipp Kief 3.6.0
+	10. Path Intellisense Christian Kohler 1.4.2
+	11. Prettier - Code formatter Esben Petersen 1.6.1
+	12. TSLint egamma 1.4.40
+	
+2.
+Create the Anuglar app 
+>ng new DatingApp-SPA	
+>ng serve to run
+
+3. add resources
+	bootstrap and font-awsome
+	>npm install bootstrap font-awesome
+	go to angular.json, look at the Styles Array. it will be referencing "src/styles.css". Open this css file and import the bootstrap and font-awesome
+	@import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+	@import '../node_modules/font-awesome/css/font-awesome.min.css';
+
+
+	
