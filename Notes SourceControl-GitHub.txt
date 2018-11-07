@@ -1,5 +1,9 @@
 We are placing both Angular and API in GIT repository
 
+.gitignore is already in the Angular app. We'll need to create one for the API.
+
+Important, we are putting the apps inside a single repository. 
+
 1. Download and install
 	https://git-scm.com/downloads
 	After the install, type git in the command prompt to check.
