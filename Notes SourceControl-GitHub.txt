@@ -23,10 +23,12 @@ We are placing both Angular and API in GIT repository
 	>git init 
 
 	you might need to close and re-open vs code. Setup repo on github and pick its path 
+	
+3. Go to Source Control, on the Changes line, click + and then click tick mark on source control line to commit. 
+
+4. Go to github and create a new repository 
+
 	https://github.com/tahirjadoon/DatingAppLearn.git 
-
-3. 
-
 
 
 
