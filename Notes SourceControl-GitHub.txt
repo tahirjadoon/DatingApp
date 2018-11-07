@@ -26,12 +26,35 @@ We are placing both Angular and API in GIT repository
 	
 3. Go to Source Control, on the Changes line, click + and then click tick mark on source control line to commit. 
 
-4. Go to github and create a new repository 
+4. Go to github and create a new repository, without readme
 
-	https://github.com/tahirjadoon/DatingAppLearn.git 
+	My repository in this case is : https://github.com/tahirjadoon/DatingApp.git
 
+	It will also give commands on the create page
 
+	4.a 
+	or create a new repository on the command line
+	
+	echo "# DatingApp" >> README.md
+	git init [already done]
+	git add README.md [already done]
+	git commit -m "first commit" [already done]
+	git remote add origin https://github.com/tahirjadoon/DatingApp.git [Pick and go back to VS Code]
+	git push -u origin master
 
+	4.b 
+	or push an existing repository from the command line
+	
+	git remote add origin https://github.com/tahirjadoon/DatingApp.git
+	git push -u origin master
+
+5.
+	Pick and paste the following on command prompt, at the root level
+	git remote add origin https://github.com/tahirjadoon/DatingApp.git
+
+	Inside the source control, on Source Control line, you should see Git. Click on the 3 dots and then click on Push To
+
+6.
 These are common Git commands used in various situations:
 
 	start a working area (see also: git help tutorial)
