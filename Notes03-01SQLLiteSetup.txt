@@ -48,13 +48,17 @@ Creating the database using Entity Framework migrations
 	services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection"))); 
 	
 5. Open terminal CTRL+` and create the initial database . It will create the migrations folder
-	dotnet ef migrations add InitialCreate
+	> dotnet ef migrations add InitialCreate
 	To undo this action, use 'ef migrations remove'
 	
 6. Apply migration and create Db
 	> dotnet ef database update
 	It will create a DatingApp.db
 	Using SQL Lite DB browser you can look at the data
+
+7. When ever we add new model or change properties inside the class, we need to add new migration
+	> dotnet ef migrations add AddedUserEntity
+	> dotnet ef database update
 	
 	
 	

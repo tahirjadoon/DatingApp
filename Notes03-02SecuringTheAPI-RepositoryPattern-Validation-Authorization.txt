@@ -1,0 +1,180 @@
+1. How we store password in this SQL Lite DB?
+    Its a very simple and direct approach. 
+        We'll hash (SHA512) the password and then we'll add salt to the password. 
+
+2. Creating the user model
+    We have created a User model in API under Models folder with 4 properties: Id, UserName, PasswordHash and PasswordSalt
+    We need to tell the EF about this. Add a DBSet in DataContext
+    When ever we add new model or change properties inside the class, we need to add new migration
+        > dotnet ef migrations add AddedUserEntity
+        > dotnet ef database update
+        Check migrations folder and we should have the new entries
+
+    Also check >>>Notes03-01SQLLiteSetup.txt<<< for setting up the DB and doing initial migrations...
+
+3. The repository pattern -- DI
+    Repository interfaces and concreate classes are in "Data" folder
+    DataContext is injected in the concreate repository classes
+    We'll need to inject these repositories as well
+        Go to Startup class 
+            ConfigureServices section and add following. We'll do the same for other repositories as well. Please
+                >>>services.AddScoped<IAuthRepository, AuthRepository>();<<<
+        Please note that the order doesn't matter inside ConfigureServices section where as the order does matter inside the Configure section
+
+4. Creating the Authentication Controller
+    All the controllers are inside the Controllers folder. 
+    Injectinng the repository via constructor, check #3 above for more details. 
+
+5. Data Transfer Objects
+    These are models in which we will get data or send data. In classic MVC there are view models. Created a folder called Dtos
+    To debug we'll need to add configuration. Go to Debug tab (bug icon)
+    At the top select Add Configuration from the drop down. In the middle select .NET code from properties.
+        It will add a new configuaration to the launch.json file
+        Then beck to the debug tab, at the top select .NET Core Attach in the dropdown and click a run (green arrow) button to select the processes
+
+6. Validation
+    We'll validate the Dtos rather than the models. Take a look at Dtos/UserForRegDto
+    IMPORTANT: 
+        We are using attribute [ApiController] so we don't need to 
+            1. put [FormBody] with the POST/PUT requests
+            2. validation will happen automatically as well.  
+        Without [ApiController], we'll need to put
+            1. [FromBody] with the POST/PUT requests
+            2. >>>if(!ModelState.IsValid) return BadRequest(ModelState);<<< for validation
+
+7. Token Authentication
+    We'll be using JSON Web Tokens (JWT). 
+    It's self contained, has credentials, claims and other information
+    JWT Structure
+        Header => { "alg": "HS512", "typ" : "JWT"}
+        Payload => { "nameid": "8", "unique_name": "frank", "nbf": 1511110407, "exp": 1511110407, "iat": 1511110407 } (ngf=notbefore date, exp=expiry date, iat=issued date)
+        Secret (on the server) => HMACSHA256(base64URLEncode(header)+"."+base64UrlEncode(payload), secret) secret base64 encoded
+
+                    -----------------       ----Sends UserName and PasswordHash>>>>>>>>     -------------
+                    |   Client      |       <<<<Validates and sends back JWT-----------     |    Server |
+                    -----------------       ----Sends JWT for further requests>>>>>>>>>     -------------
+                    JWT Saved Locally       <<<<Validates JWT and sends back response--
+
+    We'll need following reference while building the Token. Follow comments in AuthController/Login method
+        using System;
+        using Microsoft.IdentityModel.Tokens;
+        using System.Security.Claims;
+        using System.Text;
+        using Microsoft.Extensions.Configuration;
+        using System.IdentityModel.Tokens.Jwt;
+
+    Token key will go in AppSettings.json => extremely long randomly generated characters. Must be minimum 12 characters.
+        "AppSettings":{ "Token": "802057ff9b5b4eb7fbb8856b6eb2cc5bb0f0e70117084085b14da6e42ec646799f141eb14dac46c7be15592162b46ed5tFvD78Hoe0e0szPfTj1GRw==" } or
+        "AppSettings":{ "Token": "K0FpaJt8L3aX22o43axnFGXotLVSkyw36dm4vcsHkTWYcvoNi7guYPNelpGORwjQbqdumcoFh4DC6BF5vVqYg6SerJVLhJ3Nu26nljnoPmXhGjqXs628wD87" } or
+        "AppSettings":{ "Token": "super secret key" }, or 
+        "AppSettings":{ "Token": "E7BB246B-F412-4C12-83C0-93D515F13F84" }, or 
+        "AppSettings":{ "Token": "b0f0e701-1708-4085-b14d-a6e42ec64679" }, or
+
+    Check AuthController Login Action for more details 
+        //Constructor
+        private readonly IAuthRepository _repo;
+        private readonly IConfiguration _config;
+        public AuthController(IAuthRepository repo, IConfiguration config)
+        {
+            _config = config;
+            _repo = repo;
+        }
+
+        //Login Method
+        [HttpPost]
+        public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
+        {
+            var dbUser = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
+            if (dbUser == null)
+                return Unauthorized();
+
+            //build a token 
+
+            //will contain UserId and UserName as claims
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, dbUser.Id.ToString()),
+                new Claim(ClaimTypes.Name, dbUser.UserName)
+            };
+
+            //key to sign the token, will be hashed. 
+            //Encode into byte array 
+            //The key will come from app settings, inject configuration via the constructor
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetSection("AppSettings:Token").Value));
+
+            //signing credentials using HmacSha512Signature, takes our above key and hashes it.
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            //create security token descripter which wil contain claims, expiry date for the token and the signin credentials
+            var tokenDescriptor = new SecurityTokenDescriptor 
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(1), //this is variable
+                SigningCredentials = creds
+            };
+            
+            //token handler
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            //create a token using the token handler and pass in the token descriptor
+            //this will contain our JWT token we want to return to our clients
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            //send the Ok response with token object 
+            return Ok(new { token = tokenHandler.WriteToken(token) });
+
+        }
+
+    Do a login and pick the token. Go to https://jwt.io/ to check. You'll see the header, payload and secret sections. Be careful as to the information 
+    we place in the token as this could be seen by the user. 
+
+8. Authentication Middleware
+    We can apply Authorize attribute to the controllers or actions but we have told the API what sort of authentication scheme will be used. 
+    We'll need to add authentication middle ware. This we will do in the startup class. We'll add authentication as a service. 
+    Go to Configure and add a service
+        We'll need to import assemblies
+            using Microsoft.AspNetCore.Authentication.JwtBearer;
+            using Microsoft.IdentityModel.Tokens;
+            using System.Text;
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme) //authentication scheme
+                .AddJwtBearer(options => { //configuration options
+                    options.TokenValidationParameters = new TokenValidationParameters //will provide options to validate against
+                    {
+                        //the key is in appsettings.json
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
+                        ValidateIssuer = false, //our issuer is local host
+                        ValidateAudience = false, //is local host as well
+                    };
+                });
+
+            We have setup the service, now we need to tell our application about it inside Configure method. Put it before app.UserMVC
+                app.UseAuthentication();
+    Now where ever we'll have the Authorize attribute will be protected. 
+
+    To test in postman, put Authorize attribute on Values Controller, for this will need to import
+        using Microsoft.AspNetCore.Authorization;
+    Then put AllowAnonymous attribute on GetValue by id get method. 
+    Run the http://localhost:5000/api/values and you'll get 401 Unauthorized
+    Run the http://localhost:5000/api/values/3 and you should see the results just fine. 
+
+    Now http://localhost:5000/api/auth/login with a valid user id and password and pick the Token. Which will look like 
+        {
+            "token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIyIiwidW5pcXVlX25hbWUiOiJib2IiLCJuYmYiOjE1NDE4MzMwODEsImV4cCI6MTU0MTkxOTQ4MSwiaWF0IjoxNTQxODMzMDgxfQ.ie7ia2LXHy7XoP20DHSowB_KHOpzQK9Q-h-o5iOnVADV49j8pzad8VypKkRWVrTFBp3tAP6I_6JZNCaJwTfvlA"
+        } 
+    Copy the Token string inside the double quotes. 
+    
+    Then go to Postman and to your http://localhost:5000/api/values tab
+        Click the headers sub tab and put
+            Key = Authorization
+            Value = Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIyIiwidW5pcXVlX25hbWUiOiJib2IiLCJuYmYiOjE1NDE4MzMwODEsImV4cCI6MTU0MTkxOTQ4MSwiaWF0IjoxNTQxODMzMDgxfQ.ie7ia2LXHy7XoP20DHSowB_KHOpzQK9Q-h-o5iOnVADV49j8pzad8VypKkRWVrTFBp3tAP6I_6JZNCaJwTfvlA
+                (note Bearer keyword and space after it)
+        Click Send once again and you should see the data. 
+
+    Note that in production environment you must encrypt the topken by using https. Since we are at this point setting up the app, we'll address https later.         
+
+    At this point save your changes by going to source controllers tab
+        press + on the changes bar 
+        then enter SecuringTheAPI-RepositoryPattern-Validation-Authorization in the message 
+        and CTRL+Enter to commit the changes
